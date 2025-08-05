@@ -29,7 +29,8 @@ class User(AbstractUser):
     )
 
     birth_date = models.DateField(
-        'Birth Date'
+        'Birth Date',
+        null=True
     )
 
     phone_number = models.CharField(
@@ -54,7 +55,7 @@ class User(AbstractUser):
     )
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
 
     @property
     def is_employee(self):
