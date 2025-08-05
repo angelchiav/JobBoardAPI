@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import User, EmployeeProfile, EmployerProfile
+import re
 
 class UserSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(
@@ -47,7 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Password needs to have at least 8 characters"
             )
-        if not any(c.isalpha() for c in value) and not any(c.isdigit() for c in value):
+        if not any(c.isalpha() for c in value) or not any(c.isdigit() for c in value):
             raise serializers.ValidationError(
                 "Password needs at least one letter and number"
             )
@@ -66,7 +67,17 @@ class UserSerializer(serializers.ModelSerializer):
                 "Phone number is not valid."
             )
         return value
-        
+    
+    def validate_birth_date(self, value):
+        from datetime import date
+        today = date.today()
+        age = (today.year - value.year - ((today.month, today.day) < (value.month, value.day)))
+        if age < 18:
+            raise serializers.ValidationError(
+                "User must be at least 18 years old."
+            )
+        return value
+
     def validate(self, data):
         if data['password'] != data['password2']:
             raise serializers.ValidationError(
@@ -81,3 +92,36 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+    
+class EmployeeProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeProfile
+        fields = [
+            'id',
+            'user',
+            'resume',
+            'skills',
+            'github_url',
+            'linkedin_url',
+            'date_joined'
+        ]
+        read_only_fields = ['id', 'date_joined']
+        extra_kwargs = {
+            'resume': {'required': False},
+            'skills': {'required': False},
+            'github_url': {'required': False},
+            'linkedin_url': {'required': False}
+        }
+
+    def _validate_url(self, value, domain):
+        if domain not in value.lower():
+            raise serializers.ValidationError(f"{domain.title()} URL is not valid")
+        return value
+
+    def validate_github_url(self, value):
+        return self._validate_url(value, 'github.com')
+
+    def validate_linkedin_url(self, value):
+        return self._validate_url(value, 'linkedin.com')
+    
+    
