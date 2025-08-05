@@ -186,6 +186,9 @@ class vacancies(models.Model):
     tecnologies = models.ManyToManyField(
         tecchnology, related_name="vantec"
         )
+    remuneration = models.DecimalField(
+        decimal_places=2, max_digits=5
+    )
     modality = models.CharField(
         max_length=20
     )
