@@ -335,10 +335,14 @@ class Interview(models.Model):
         from django.utils import timezone
         
         if self.scheduled_date and self.scheduled_date < timezone.now():
-            raise ValidationError("Interview cannot be scheduled in the past.")
+            raise ValidationError(
+                "Interview cannot be scheduled in the past."
+            )
         
         if self.score is not None and (self.score < 1 or self.score > 10):
-            raise ValidationError("Score must be between 1 and 10.")
+            raise ValidationError(
+                "Score must be between 1 and 10."
+            )
     
     def save(self, *args, **kwargs):
         self.clean()
@@ -391,4 +395,4 @@ class ApplicationDocument(models.Model):
         ordering = ['-uploaded_date']
     
     def __str__(self):
-        return f"{self.application} - {self.get_document_type_display()}"
+        return f"{self.application} - {self.document_type}"
