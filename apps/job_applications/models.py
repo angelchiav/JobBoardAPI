@@ -127,3 +127,135 @@ class Vacancy(models.Model):
         verbose_name = "Vacancy"
         verbose_name_plural = "Vacancies"
         ordering = ["-publication_date"]
+
+class JobApplication(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('reviewing', 'Under Review'),
+        ('interview_scheduled', 'Interview Scheduled'),
+        ('interview_completed', 'Interview Completed'),
+        ('rejected', 'Rejected'),
+        ('accepted', 'Accepted'),
+        ('withdrawn', 'Withdrawn by Candidate')
+    ]
+
+    employee = models.ForeignKey(
+        EmployeeProfile,
+        on_delete=models.CASCADE,
+        related_name="job_applications"
+    )
+
+    vacancy = models.ForeignKey(
+        Vacancy,
+        on_delete=models.CASCADE,
+        related_name="job_applications"
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    cover_letter = models.TextField(
+        max_length=1000,
+        blank=True,
+        help_text="Optional cover letter (max 1000 characters)"
+    )
+
+    applied_date = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    last_updated = models.DateTimeField(
+        auto_now=True
+    )
+
+    notes = models.TextField(
+        blank=True,
+        help_text="Internal notes from employer"
+    )
+
+    salary_expectation = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Salary expectations (optional)"
+    )
+
+    availability_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="When can you start working?"
+    )
+
+    class Meta:
+        verbose_name = "Job Application"
+        verbose_name_plural = "Job Applications"
+        ordering = ['-applied_date']
+        unique_together = ['employee', 'vacancy']
+
+    def clean(self):
+        if self.vacancy and self.vacancy.state == "C":
+            raise ValidationError(
+                "Cannot apply to a closed vacancy"
+            )
+        
+        if self.employee and self.vacancy and self.employee.user == self.vacancy.employer.user:
+            raise ValidationError(
+                "Cannot apply to your own vacancy"
+            )
+        
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().clean(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.employee.user.get_full_name()} - {self.vacancy.title}"
+    
+    @property
+    def can_withdraw(self):
+        return self.status in ["pending", "reviewing", "interview_scheduled"]
+    
+    @property
+    def is_active(self):
+        return self.status in ["rejected", "accepted", "withdrawn"]
+    
+class ApplicationStatusHistory(models.Model):
+    application = models.ForeignKey(
+        JobApplication,
+        on_delete=models.CASCADE,
+        related_name='status_history'
+    )
+    
+    previous_status = models.CharField(
+        max_length=20,
+        choices=JobApplication.STATUS_CHOICES
+    )
+    
+    new_status = models.CharField(
+        max_length=20,
+        choices=JobApplication.STATUS_CHOICES
+    )
+    
+    changed_by = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='status_changes'
+    )
+    
+    changed_date = models.DateTimeField(auto_now_add=True)
+    
+    reason = models.TextField(
+        blank=True,
+        help_text="Reason for status change"
+    )
+
+    class Meta:
+        verbose_name = 'Application Status History'
+        verbose_name_plural = 'Application Status Histories'
+        ordering = ['-changed_date']
+    
+    def __str__(self):
+        return f"{self.application} - {self.previous_status} → {self.new_status}"
