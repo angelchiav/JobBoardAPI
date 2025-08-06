@@ -136,3 +136,8 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
             'date_joined'
         ]
         read_only_fields = ['id', 'date_joined']
+        extra_kwargs = {
+            'company_name': {'required': False},
+            'company_website': {'required': False},
+            'founded_year': {'required': False}
+        }

@@ -166,13 +166,13 @@ class EmployerProfile(models.Model):
         ordering = ['-date_joined']
 
 
-class tecchnology(models.Model):
+class Technology(models.Model):
     name = models.CharField(max_length=50, unique=True)
     
     def __str__(self):
         return self.name
 
-class vacancies(models.Model):
+class Vacancy(models.Model):
     worker_id = models.ForeignKey(
         EmployerProfile, 
         on_delete=models.CASCADE, 
@@ -196,11 +196,11 @@ class vacancies(models.Model):
     publication_date = models.DateField(
         auto_now_add=True
         )
-    STATUS_CHOISES = [
+    STATUS_CHOICES = [
         ("O", "Open"),
         ("C", "Closed")
     ]
     state = models.CharField(
         max_length=1, 
-        choices=STATUS_CHOISES, default='O'
+        choices=STATUS_CHOICES, default='O'
         )
