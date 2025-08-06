@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from apps.users.models import EmployeeProfile, EmployerProfile
+from apps.users.models import EmployeeProfile, EmployerProfile, User
 
 class Technology(models.Model):
     name = models.CharField(
@@ -259,3 +259,136 @@ class ApplicationStatusHistory(models.Model):
     
     def __str__(self):
         return f"{self.application} - {self.previous_status} → {self.new_status}"
+    
+class Interview(models.Model):
+    INTERVIEW_TYPES = [
+        ('phone', 'Phone Interview'),
+        ('video', 'Video Interview'),
+        ('in_person', 'In Person Interview'),
+        ('technical', 'Technical Interview'),
+    ]
+
+    STATUS_CHOICES = [
+        ('scheduled', 'Scheduled'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('rescheduled', 'Rescheduled')
+    ]
+
+    application = models.ForeignKey(
+        JobApplication,
+        on_delete=models.CASCADE,
+        related_name="interviews"
+    )
+
+    interview_type = models.CharField(
+        max_length=20,
+        choices=INTERVIEW_TYPES,
+        default='video'
+    )
+
+    scheduled_date = models.DateTimeField()
+
+    duration_minutes = models.PositiveIntegerField(
+        default=60,
+        help_text="Expected duration in minutes."
+    )
+
+    location = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Physical address or video link."
+    )
+
+    interviewer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="conducted_interviews"
+    )
+
+    status = models.CharField(
+        max_length=15,
+        choices=STATUS_CHOICES,
+        default='scheduled'
+    )
+
+    feedback = models.TextField(
+        blank=True,
+        help_text="Interview feedback and notes"
+    )
+    
+    score = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Interview score (1-10)"
+    )
+    
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Interview'
+        verbose_name_plural = 'Interviews'
+        ordering = ['scheduled_date']
+    
+    def clean(self):
+        from django.utils import timezone
+        
+        if self.scheduled_date and self.scheduled_date < timezone.now():
+            raise ValidationError("Interview cannot be scheduled in the past.")
+        
+        if self.score is not None and (self.score < 1 or self.score > 10):
+            raise ValidationError("Score must be between 1 and 10.")
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.application.employee.user.get_full_name()} - {self.interview_type} - {self.scheduled_date.strftime('%Y-%m-%d %H:%M')}"
+
+
+class ApplicationDocument(models.Model):
+    DOCUMENT_TYPES = [
+        ('CV', 'CV/Resume'),
+        ('Portfolio', 'Portfolio'),
+        ('Certificate', 'Certificate'),
+        ('Diploma', 'Diploma'),
+        ('Cover Letter', 'Cover Letter'),
+        ('References', 'References'),
+        ('Other', 'Other')
+    ]
+    
+    application = models.ForeignKey(
+        JobApplication,
+        on_delete=models.CASCADE,
+        related_name='documents'
+    )
+    
+    document = models.FileField(
+        upload_to='application_documents/',
+        help_text="Additional documents (CV, portfolio, certificates, etc.)"
+    )
+    
+    document_type = models.CharField(
+        max_length=20,
+        choices=DOCUMENT_TYPES,
+        default='Other',
+        help_text="Type of document"
+    )
+    
+    description = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Brief description of the document"
+    )
+    
+    uploaded_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Application Document'
+        verbose_name_plural = 'Application Documents'
+        ordering = ['-uploaded_date']
+    
+    def __str__(self):
+        return f"{self.application} - {self.get_document_type_display()}"
