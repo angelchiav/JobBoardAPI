@@ -209,7 +209,7 @@ class JobApplication(models.Model):
         
     def save(self, *args, **kwargs):
         self.clean()
-        super().clean(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.employee.user.get_full_name()} - {self.vacancy.title}"
@@ -220,7 +220,7 @@ class JobApplication(models.Model):
     
     @property
     def is_active(self):
-        return self.status in ["rejected", "accepted", "withdrawn"]
+        return self.status not in ["rejected", "accepted", "withdrawn"]
     
 class ApplicationStatusHistory(models.Model):
     application = models.ForeignKey(
