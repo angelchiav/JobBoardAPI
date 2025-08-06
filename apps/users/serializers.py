@@ -124,4 +124,16 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
     def validate_linkedin_url(self, value):
         return self._validate_url(value, 'linkedin.com')
     
-    
+
+class EmployerProfileSerializer(serializers.ModelSerializer):
+    class Meta:    
+        model = EmployerProfile
+        fields = [
+            'id',
+            'user',
+            'company_name',
+            'company_website',
+            'founded_year',
+            'date_joined'
+        ]
+        read_only_fields = ['id', 'date_joined']
