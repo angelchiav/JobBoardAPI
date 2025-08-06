@@ -123,7 +123,6 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
 
     def validate_linkedin_url(self, value):
         return self._validate_url(value, 'linkedin.com')
-    
 
 class EmployerProfileSerializer(serializers.ModelSerializer):
     class Meta:    
