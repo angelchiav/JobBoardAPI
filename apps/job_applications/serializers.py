@@ -284,3 +284,47 @@ class JobApplicationListSerializer(serializers.ModelSerializer):
             'applied_date',
             'salary_expectation'
         ]
+
+class JobApplicationCreateSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = JobApplication
+        fields = [
+            'vacancy',
+            'cover_letter',
+            'salary_expectation',
+            'availability_date'
+        ]
+    
+    def create(self, validated_data):
+        validated_data['employee'] = self.context['request'].user.employee_profile
+        return super().create(validated_data)
+    
+class JobApplicationUdpateSerializer(serializers.ModelSerializer):
+    reason = serializers.CharField(write_only=True, required=False, max_length=500)
+
+    class Meta:
+        model = JobApplication
+        fields = ['status', 'notes', 'reason']
+        extra_kwargs = {
+            'status': {'required': False},
+            'notes': {'required': False},
+            'reason': {'required': False}
+        }
+
+    def update(self, instance, validated_data):
+        reason = validated_data.pop('reason', '')
+        previous_status = instance.status
+
+        instance = super().update(instance, validated_data)
+
+        if previous_status != instance.status:
+            ApplicationStatusHistory.objects.create(
+                application=instance,
+                previous_status=previous_status,
+                new_status=instance.status,
+                changed_by=self.context['request'].user,
+                reason=reason
+            )
+
+        return instance
