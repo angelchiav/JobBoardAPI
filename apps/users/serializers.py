@@ -14,6 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'password',
+            'password2',
             'email',
             'bio',
             'role',
@@ -62,7 +63,7 @@ class UserSerializer(serializers.ModelSerializer):
         return value
             
     def validate_phone_number(self, value):
-        if not all(value.isdigit()):
+        if not value.isdigit():
             raise serializers.ValidationError(
                 "Phone number is not valid."
             )
