@@ -53,19 +53,20 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["POST"])
     def register(self, request):
         serializer = UserSerializer(data=request.data)
-
+        
         if serializer.is_valid():
-            serializer.save()  
-            
-            user = User.objects.get(email=user.data["email"])
-            user.set_password(user.data["password"])
-            user.save()
-            
-            token = Token.objects.create(user=user)
-            return Response({"token": token.key, "user": serializer.data}, status=status.HTTP_201_CREATED)
+            user = serializer.save()  # El serializer ya maneja el set_password
 
+            refresh = RefreshToken.for_user(user) #genera un token nuevo
+            
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "user": UserSerializer(user).data
+            }, status=status.HTTP_201_CREATED)
+            
         return Response(
             {"error": "register failed", "details": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+        
