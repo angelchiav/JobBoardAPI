@@ -40,7 +40,7 @@ class Vacancy(models.Model):
 
     technologies = models.ManyToManyField(
         Technology,
-        related_name="vacancies",
+        related_name="technologies",
         blank=True
     )
 

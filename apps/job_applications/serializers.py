@@ -9,6 +9,7 @@ from .models import (
 )
 from django.utils import timezone
 
+
 class TechnologySerializer(serializers.ModelSerializer):
     class Meta:
         model = Technology
@@ -31,7 +32,7 @@ class VacancySerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    technology_name = serializers.ListField(
+    technology = serializers.ListField(
         child=serializers.CharField(max_length=50),
         write_only=True,
         required=False
@@ -70,8 +71,8 @@ class VacancySerializer(serializers.ModelSerializer):
             'employer_website',
             'title',
             'description',
+            'technology',
             'technologies',
-            'technology_names',
             'modality',
             'modality_display',
             'location',
@@ -83,11 +84,10 @@ class VacancySerializer(serializers.ModelSerializer):
             'closing_date',
             'state',
             'status_display',
-            'views_count',
             'applications_count',
             'is_open'
         ]
-        read_only_fields = ['id', 'publication_date', 'employer_name', 'employer_website', 'status_display', 'modality_display', 'applications_count', 'salary_range', 'is_open', 'views_count']
+        read_only_fields = ['id', 'publication_date', 'employer_name', 'employer_website', 'technologies', 'status_display', 'modality_display', 'applications_count', 'salary_range', 'is_open']
 
     def validate_title(self, value):
         if len(value) < 5:
@@ -123,7 +123,7 @@ class VacancySerializer(serializers.ModelSerializer):
         return data
         
     def create(self, validated_data):
-        technology_names = validated_data.pop('technology_names', [])
+        technology_names = validated_data.pop('technologies', [])
         validated_data['employer'] = self.context['request'].user.employer_profile
 
         vacancy = super().create(validated_data)
@@ -137,7 +137,7 @@ class VacancySerializer(serializers.ModelSerializer):
         return vacancy
         
     def update(self, instance, validated_data):
-        technology_names = validated_data.pop('technology_names', None)
+        technology_names = validated_data.pop('technology', None)
         instance = super().update(instance, validated_data)
 
         if technology_names is not None:
@@ -183,6 +183,7 @@ class VacancyCreateSerializer(serializers.ModelSerializer):
         fields = [
             'title',
             'description',
+            'technologies',
             'technology_names',
             'modality',
             'location',
@@ -193,7 +194,7 @@ class VacancyCreateSerializer(serializers.ModelSerializer):
         ]
     
     def create(self, validated_data):
-        technology_names = validated_data.pop('technology_names')
+        technology_names = validated_data.pop('technologies')
         validated_data['employer'] = self.context['request'].user.employer_profile
         vacancy = super().create(validated_data)
 

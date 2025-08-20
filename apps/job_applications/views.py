@@ -58,3 +58,45 @@ class TechnologyViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         # Writes require authentication (either role)
         return [permissions.IsAuthenticated()]
+class ThechnologyViewSet(viewsets.ModelViewSet):
+    queryset = Technology.objects.all()
+    serializer_class = TechnologySerializer
+
+    # crear tecnologia segun la información del serializer
+    def createTechnology(self, request, *args, **kwargs):
+        serializer = TechnologySerializer(data=request.data)
+
+        if serializer.is_valid:
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"error": "register failed", "details": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class VacancyViewSet(viewsets.ModelViewSet):
+    queryset = Vacancy.objects.all()
+    serializer_class = VacancySerializer
+    # filterset_fields = ('title') #filtrado por titulo
+
+    # listar vacantes
+    def listVacancy(self, request):
+        queryset = Vacancy.objects.all()
+        serializer = VacancySerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    # crear vacante
+    def createVacancy(self, request, *args, **kwargs):
+        serializer = VacancyCreateSerializer(data=request.data)
+
+        if serializer.is_valid:
+            serializer.save()
+            return Response(status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"error": "register failed", "details": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
