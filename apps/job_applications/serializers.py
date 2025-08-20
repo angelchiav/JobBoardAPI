@@ -301,7 +301,7 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
         validated_data['employee'] = self.context['request'].user.employee_profile
         return super().create(validated_data)
     
-class JobApplicationUdpateSerializer(serializers.ModelSerializer):
+class JobApplicationUpdateSerializer(serializers.ModelSerializer):
     reason = serializers.CharField(write_only=True, required=False, max_length=500)
 
     class Meta:
