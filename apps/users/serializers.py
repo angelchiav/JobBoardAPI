@@ -86,7 +86,7 @@ class UserSerializer(serializers.ModelSerializer):
             )
         return data
     
-    def create(self, validated_data):
+    def create(self, validated_data):   
         validated_data.pop('password2')
         password = validated_data.pop('password')
         user = User(**validated_data)
