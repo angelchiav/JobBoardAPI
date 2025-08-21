@@ -1,5 +1,4 @@
 from contextvars import Token
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from apps.users.models import User, EmployerProfile, EmployeeProfile
 from apps.users.serializers import UserSerializer, EmployerProfileSerializer, EmployeeProfileSerializer
@@ -7,6 +6,8 @@ from django.contrib.auth import authenticate
 from rest_framework import viewsets, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import action
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -69,6 +70,17 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+
+class userLogOut(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        print(request.headers)
+        token_key = request.auth.key
+        token = Token.objects.get(key=token_key)
+        token.delete()
+
+        return Response({'detail': 'Successfully logged out.'})
 
 class EmployerViewSet(viewsets.ModelViewSet):
     queryset = EmployerProfile.objects.all()
