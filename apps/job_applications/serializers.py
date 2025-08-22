@@ -104,7 +104,7 @@ class VacancySerializer(serializers.ModelSerializer):
         return value
         
     def validate_closing_date(self, value):
-        if value and value <= timezone.now():
+        if value and value == timezone.now():
             raise serializers.ValidationError(
                 "Closing date must be in the future."
             )

@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.db import models
 from django.core.exceptions import ValidationError
 from apps.users.models import EmployeeProfile, EmployerProfile, User
@@ -79,6 +80,7 @@ class Vacancy(models.Model):
     )
 
     closing_date = models.DateTimeField(
+        default= timezone.now(),
         null=True,
         blank=True,
         help_text="When applications close."
