@@ -1,8 +1,8 @@
 from rest_framework import serializers, permissions
 from .models import (
-    JobApplication, 
-    ApplicationDocument, 
-    ApplicationStatusHistory, 
+    JobApplication,
+    ApplicationDocument,
+    ApplicationStatusHistory,
     Interview,
     Technology,
     Vacancy
@@ -25,6 +25,7 @@ class TechnologySerializer(serializers.ModelSerializer):
                 "The technology name has to be at least 3 characters long."
             )
         return value.title()
+
 
 class VacancySerializer(serializers.ModelSerializer):
     technologies = TechnologySerializer(
@@ -87,7 +88,8 @@ class VacancySerializer(serializers.ModelSerializer):
             'applications_count',
             'is_open'
         ]
-        read_only_fields = ['id', 'publication_date', 'employer_name', 'employer_website', 'technologies', 'status_display', 'modality_display', 'applications_count', 'salary_range', 'is_open']
+        read_only_fields = ['id', 'publication_date', 'employer_name', 'employer_website', 'technologies',
+            'status_display', 'modality_display', 'applications_count', 'salary_range', 'is_open']
 
     def validate_title(self, value):
         if len(value) < 5:
@@ -95,33 +97,26 @@ class VacancySerializer(serializers.ModelSerializer):
                 "Title must be at least 5 characters long."
             )
         return value
-        
+
     def validate_description(self, value):
         if len(value) < 20:
             raise serializers.ValidationError(
                 "Description must be at least 20 characters long."
             )
         return value
-        
+
+
     def validate_closing_date(self, value):
-        if value and value == timezone.now():
+
+        today = timezone.now().date()
+
+        if value and value <= today:
             raise serializers.ValidationError(
                 "Closing date must be in the future."
             )
-        return value
-        
-    def validate(self, data):
-        salary_min = data.get('salary_min')
-        salary_max = data.get('salary_max')
 
-        if salary_min and salary_max:
-            if salary_min >= salary_max:
-                raise serializers.ValidationError(
-                    "Minimum salary has to be less than maximum salary."
-                )
-            
-        return data
-        
+        return value
+
     def create(self, validated_data):
         technology_names = validated_data.pop('technologies', [])
         validated_data['employer'] = self.context['request'].user.employer_profile
