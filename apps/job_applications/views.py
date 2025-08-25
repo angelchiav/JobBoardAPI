@@ -2,6 +2,7 @@ from django.db.models import Prefetch
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from .models import Technology, Vacancy, JobApplication, ApplicationStatusHistory
 from .serializers import (
@@ -11,8 +12,7 @@ from .serializers import (
     VacancyCreateSerializer,
     JobApplicationSerializer,
     JobApplicationListSerializer,
-    JobApplicationCreateSerializer,
-    JobApplicationUpdateSerializer
+    JobApplicationCreateSerializer
 )
 
 
@@ -58,6 +58,7 @@ class TechnologyViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         # Writes require authentication (either role)
         return [permissions.IsAuthenticated()]
+    
 class ThechnologyViewSet(viewsets.ModelViewSet):
     queryset = Technology.objects.all()
     serializer_class = TechnologySerializer
@@ -77,9 +78,15 @@ class ThechnologyViewSet(viewsets.ModelViewSet):
 
 
 class VacancyViewSet(viewsets.ModelViewSet):
-    queryset = Vacancy.objects.all()
+    queryset = Vacancy.objects.all().order_by("title")
+    
     serializer_class = VacancySerializer
-    # filterset_fields = ('title') #filtrado por titulo
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter] #metodo importado para la busqueda
+    search_fields = [ #filtrado por titulo y id
+        'id',
+        'title'
+    ]
 
     # listar vacantes
     def listVacancy(self, request):
